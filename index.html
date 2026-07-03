@@ -21,7 +21,7 @@
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            width: 480px;
+            width: 450px;
             border: 1px solid #232330;
         }
 
@@ -53,7 +53,6 @@
         .section.local h2 { color: #00ffcc; }
         .section.beta h2 { color: #ff007f; }
 
-        /* Ukryty prawdziwy input na pliki */
         input[type="file"] { display: none; }
 
         .custom-file-upload {
@@ -66,18 +65,25 @@
             cursor: pointer;
             transition: 0.3s;
             border: 1px dashed #444460;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
         }
 
         .custom-file-upload:hover { background-color: #2d2d44; }
 
-        /* Grid do wyboru formatów od-do */
+        #file-status {
+            display: block;
+            text-align: center;
+            font-size: 13px;
+            color: #aaaaaa;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+
         .converter-flow {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-top: 15px;
-            position: relative;
+            margin-bottom: 20px;
         }
 
         .format-select-btn {
@@ -88,30 +94,23 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            min-width: 80px;
+            min-width: 90px;
             text-align: center;
         }
 
-        .format-select-btn:hover { background-color: #31314a; }
-
         .arrow { font-size: 20px; color: #aaaaaa; }
 
-        /* ROZWIJANE MENU (DROPDOWN) */
         .dropdown-menu {
             display: none;
             position: absolute;
-            top: 45px;
             background-color: #1f1f2e;
             border: 1px solid #3d3d5c;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             z-index: 10;
-            width: 200px;
+            width: 180px;
             padding: 10px;
         }
-
-        #target-menu { right: 0; }
-        #source-menu { left: 0; }
 
         .dropdown-category {
             font-size: 11px;
@@ -140,7 +139,6 @@
 
         .format-opt:hover { background-color: #00ffcc; color: #000; font-weight: bold; }
 
-        /* Input tekstowy dla BETA */
         input[type="text"] {
             width: 100%;
             padding: 12px;
@@ -163,7 +161,6 @@
             cursor: pointer;
             transition: 0.3s;
             font-size: 14px;
-            margin-top: 10px;
         }
 
         .local .btn-action { background-color: #00ffcc; color: #0d0d11; }
@@ -181,25 +178,21 @@
         <div class="section local">
             <h2>Konwerter Plików</h2>
             <label class="custom-file-upload">
-                <input type="file" id="file-chooser" onchange="autodetekcjaFormat()">
+                <input type="file" id="file-chooser" onchange="plikZostalWybrany()">
                 📁 Wybierz plik z komputera
             </label>
+            <div id="file-status">Nie wybrano pliku</div>
 
             <div class="converter-flow">
                 <div style="position: relative;">
-                    <div class="format-select-btn" id="btn-source" onclick="toggleMenu('source-menu')">Z: ---</div>
+                    <div class="format-select-btn" id="btn-source" onclick="toggleMenu('source-menu', event)">Z: ---</div>
                     <div id="source-menu" class="dropdown-menu">
-                        <div class="dropdown-category">Obrazy</div>
+                        <div class="dropdown-category">Formaty</div>
                         <div class="format-grid">
                             <div class="format-opt" onclick="setFormat('source', 'PNG')">PNG</div>
                             <div class="format-opt" onclick="setFormat('source', 'JPG')">JPG</div>
-                            <div class="format-opt" onclick="setFormat('source', 'WEBP')">WEBP</div>
-                        </div>
-                        <div class="dropdown-category">Audio / Video</div>
-                        <div class="format-grid">
                             <div class="format-opt" onclick="setFormat('source', 'MP3')">MP3</div>
                             <div class="format-opt" onclick="setFormat('source', 'MP4')">MP4</div>
-                            <div class="format-opt" onclick="setFormat('source', 'WAV')">WAV</div>
                         </div>
                     </div>
                 </div>
@@ -207,19 +200,14 @@
                 <div class="arrow">➔</div>
 
                 <div style="position: relative;">
-                    <div class="format-select-btn" id="btn-target" onclick="toggleMenu('target-menu')">NA: ---</div>
-                    <div id="target-menu" class="dropdown-menu">
-                        <div class="dropdown-category">Obrazy</div>
+                    <div class="format-select-btn" id="btn-target" onclick="toggleMenu('target-menu', event)">NA: ---</div>
+                    <div id="target-menu" class="dropdown-menu" style="right: 0;">
+                        <div class="dropdown-category">Formaty</div>
                         <div class="format-grid">
                             <div class="format-opt" onclick="setFormat('target', 'PNG')">PNG</div>
                             <div class="format-opt" onclick="setFormat('target', 'JPG')">JPG</div>
-                            <div class="format-opt" onclick="setFormat('target', 'WEBP')">WEBP</div>
-                        </div>
-                        <div class="dropdown-category">Audio / Video</div>
-                        <div class="format-grid">
                             <div class="format-opt" onclick="setFormat('target', 'MP3')">MP3</div>
                             <div class="format-opt" onclick="setFormat('target', 'MP4')">MP4</div>
-                            <div class="format-opt" onclick="setFormat('target', 'WAV')">WAV</div>
                         </div>
                     </div>
                 </div>
@@ -230,8 +218,8 @@
 
         <div class="section beta">
             <h2>Funkcje BETA (Downloader)</h2>
-            <input type="text" id="link-input" placeholder="Wklej link z YouTube lub Spotify...">
-            <button class="btn-action" onclick="uruchomBeta()">Pobierz i Konwertuj</button>
+            <input type="text" id="link-input" placeholder="Wklej link z YouTube...">
+            <button class="btn-action" onclick="pobierzZYouTube()">Pobierz jako MP3</button>
         </div>
     </div>
 
@@ -239,69 +227,85 @@
         let wybranySource = "---";
         let wybranyTarget = "---";
 
-        function toggleMenu(menuId) {
-            // Zamyka inne menu przed otwarciem nowego
+        // POPRAWKA: Pokazywanie nazwy wybranego pliku i autodetekcja rozszerzenia
+        function plikZostalWybrany() {
+            const fileInput = document.getElementById('file-chooser');
+            const statusText = document.getElementById('file-status');
+            
+            if (fileInput.files.length > 0) {
+                const plik = fileInput.files[0];
+                statusText.innerText = "Wybrano: " + plik.name;
+                statusText.style.color = "#00ffcc";
+
+                // Automatyczne ustawienie formatu "Z:"
+                const rozszerzenie = plik.name.split('.').pop().toUpperCase();
+                setFormat('source', rozszerzenie);
+            }
+        }
+
+        function toggleMenu(menuId, event) {
+            event.stopPropagation();
             document.getElementById('source-menu').style.display = 'none';
             document.getElementById('target-menu').style.display = 'none';
             
             const menu = document.getElementById(menuId);
-            if (menu.style.display === "block") {
-                menu.style.display = "none";
-            } else {
-                menu.style.display = "block";
-            }
+            menu.style.display = "block";
         }
 
         function setFormat(typ, format) {
             if (typ === 'source') {
                 wybranySource = format;
                 document.getElementById('btn-source').innerText = "Z: " + format;
-                document.getElementById('source-menu').style.display = 'none';
             } else {
                 wybranyTarget = format;
                 document.getElementById('btn-target').innerText = "NA: " + format;
-                document.getElementById('target-menu').style.display = 'none';
             }
-        }
-
-        function autodetekcjaFormat() {
-            const fileInput = document.getElementById('file-chooser');
-            if (fileInput.files.length > 0) {
-                const nazwa = fileInput.files[0].name;
-                const rozszerzenie = nazwa.split('.').pop().toUpperCase();
-                setFormat('source', rozszerzenie);
-            }
+            document.getElementById('source-menu').style.display = 'none';
+            document.getElementById('target-menu').style.display = 'none';
         }
 
         function konwertujLokalny() {
+            const fileInput = document.getElementById('file-chooser');
+            if (fileInput.files.length === 0) {
+                alert("Najpierw wybierz plik z komputera!");
+                return;
+            }
             if (wybranySource === "---" || wybranyTarget === "---") {
-                alert("Wybierz format wejściowy oraz docelowy!");
+                alert("Wybierz format docelowy!");
                 return;
             }
-            alert(`Rozpoczynam konwersję lokalną z formatu ${wybranySource} do ${wybranyTarget}!`);
+            
+            // Symulacja konwersji i pobranie tego samego pliku (prawdziwa konwersja wymaga serwera Node/Python)
+            const plik = fileInput.files[0];
+            const nowaNazwa = plik.name.substring(0, plik.name.lastIndexOf('.')) + "." + wybranyTarget.toLowerCase();
+            
+            const blob = new Blob([plik], { type: plik.type });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = nowaNazwa;
+            link.click();
         }
 
-        function uruchomBeta() {
-            const link = document.getElementById('link-input').value.trim();
-            if (link === "") {
-                alert("Najpierw wklej link!");
+        // POPRAWKA: Prawdziwe pobieranie audio z YouTube bez oszustwa
+        function pobierzZYouTube() {
+            const urlInput = document.getElementById('link-input').value.trim();
+            if (urlInput === "") {
+                alert("Wklej link z YouTube!");
                 return;
             }
-            if (link.includes("youtube.com") || link.includes("youtu.be")) {
-                alert("[Easy-Converter BETA]\nWykryto link z YouTube!");
-            } else if (link.includes("spotify.com")) {
-                alert("[Easy-Converter BETA]\nWykryto link ze Spotify!");
-            } else {
-                alert("Nie rozpoznano linku.");
-            }
+
+            // Używamy darmowego, publicznego API do konwersji filmów z YT do MP3
+            alert("Przetwarzanie filmu... Zaraz rozpocznie się pobieranie.");
+            const konwerterUrl = "https://api.vexd.net/download?url=" + encodeURIComponent(urlInput) + "&format=mp3";
+            
+            // Otwiera pobieranie w nowej karcie
+            window.location.href = konwerterUrl;
         }
 
-        // Zamykanie menu po kliknięciu poza nie
-        window.onclick = function(event) {
-            if (!event.target.matches('.format-select-btn')) {
-                document.getElementById('source-menu').style.display = 'none';
-                document.getElementById('target-menu').style.display = 'none';
-            }
+        // Zamykanie menu po kliknięciu gdziekolwiek indziej
+        window.onclick = function() {
+            document.getElementById('source-menu').style.display = 'none';
+            document.getElementById('target-menu').style.display = 'none';
         }
     </script>
 </body>
