@@ -191,8 +191,7 @@
                         <div class="format-grid">
                             <div class="format-opt" onclick="setFormat('source', 'PNG')">PNG</div>
                             <div class="format-opt" onclick="setFormat('source', 'JPG')">JPG</div>
-                            <div class="format-opt" onclick="setFormat('source', 'MP3')">MP3</div>
-                            <div class="format-opt" onclick="setFormat('source', 'MP4')">MP4</div>
+                            <div class="format-opt" onclick="setFormat('source', 'WEBP')">WEBP</div>
                         </div>
                     </div>
                 </div>
@@ -206,8 +205,7 @@
                         <div class="format-grid">
                             <div class="format-opt" onclick="setFormat('target', 'PNG')">PNG</div>
                             <div class="format-opt" onclick="setFormat('target', 'JPG')">JPG</div>
-                            <div class="format-opt" onclick="setFormat('target', 'MP3')">MP3</div>
-                            <div class="format-opt" onclick="setFormat('target', 'MP4')">MP4</div>
+                            <div class="format-opt" onclick="setFormat('target', 'WEBP')">WEBP</div>
                         </div>
                     </div>
                 </div>
@@ -223,11 +221,12 @@
         </div>
     </div>
 
+    <canvas id="conversion-canvas" style="display: none;"></canvas>
+
     <script>
         let wybranySource = "---";
         let wybranyTarget = "---";
 
-        // POPRAWKA: Pokazywanie nazwy wybranego pliku i autodetekcja rozszerzenia
         function plikZostalWybrany() {
             const fileInput = document.getElementById('file-chooser');
             const statusText = document.getElementById('file-status');
@@ -237,9 +236,10 @@
                 statusText.innerText = "Wybrano: " + plik.name;
                 statusText.style.color = "#00ffcc";
 
-                // Automatyczne ustawienie formatu "Z:"
                 const rozszerzenie = plik.name.split('.').pop().toUpperCase();
-                setFormat('source', rozszerzenie);
+                // Dla JPG/JPEG ujednolicamy do JPG
+                const dopasowaneRozszerzenie = rozszerzenie === "JPEG" ? "JPG" : rozszerzenie;
+                setFormat('source', dopasowaneRozszerzenie);
             }
         }
 
@@ -264,6 +264,7 @@
             document.getElementById('target-menu').style.display = 'none';
         }
 
+        // PRAWDZIWA KONWERSJA PNG -> JPG / JPG -> PNG w przeglądarce
         function konwertujLokalny() {
             const fileInput = document.getElementById('file-chooser');
             if (fileInput.files.length === 0) {
@@ -274,35 +275,60 @@
                 alert("Wybierz format docelowy!");
                 return;
             }
-            
-            // Symulacja konwersji i pobranie tego samego pliku (prawdziwa konwersja wymaga serwera Node/Python)
+
             const plik = fileInput.files[0];
-            const nowaNazwa = plik.name.substring(0, plik.name.lastIndexOf('.')) + "." + wybranyTarget.toLowerCase();
-            
-            const blob = new Blob([plik], { type: plik.type });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = nowaNazwa;
-            link.click();
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('conversion-canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // Ustawiamy wymiary płótna dokładnie takie jak obrazek
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    // Jeśli konwertujemy do JPG, dodajemy białe tło (bo PNG może być przezroczyste, a JPG nie obsługuje przezroczystości)
+                    if (wybranyTarget === "JPG") {
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+
+                    // Rysujemy stary obrazek na płótnie
+                    ctx.drawImage(img, 0, 0);
+
+                    // Mapowanie formatów dla przeglądarki
+                    let mimeType = "image/png";
+                    if (wybranyTarget === "JPG") mimeType = "image/jpeg";
+                    if (wybranyTarget === "WEBP") mimeType = "image/webp";
+
+                    // Wyciągamy z płótna nowy, przekonwertowany plik
+                    const dataUrl = canvas.toDataURL(mimeType, 0.9);
+                    
+                    // Automatyczne pobieranie nowego pliku
+                    const nowaNazwa = plik.name.substring(0, plik.name.lastIndexOf('.')) + "." + wybranyTarget.toLowerCase();
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = nowaNazwa;
+                    link.click();
+                };
+                img.src = event.target.result;
+            };
+
+            reader.readAsDataURL(plik);
         }
 
-        // POPRAWKA: Prawdziwe pobieranie audio z YouTube bez oszustwa
         function pobierzZYouTube() {
             const urlInput = document.getElementById('link-input').value.trim();
             if (urlInput === "") {
                 alert("Wklej link z YouTube!");
                 return;
             }
-
-            // Używamy darmowego, publicznego API do konwersji filmów z YT do MP3
             alert("Przetwarzanie filmu... Zaraz rozpocznie się pobieranie.");
-            const konwerterUrl = "https://api.vexd.net/download?url=" + encodeURIComponent(urlInput) + "&format=mp3";
-            
-            // Otwiera pobieranie w nowej karcie
-            window.location.href = konwerterUrl;
+            window.location.href = "https://api.vexd.net/download?url=" + encodeURIComponent(urlInput) + "&format=mp3";
         }
 
-        // Zamykanie menu po kliknięciu gdziekolwiek indziej
         window.onclick = function() {
             document.getElementById('source-menu').style.display = 'none';
             document.getElementById('target-menu').style.display = 'none';
