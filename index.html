@@ -21,7 +21,7 @@
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            width: 450px;
+            width: 480px;
             border: 1px solid #232330;
         }
 
@@ -94,7 +94,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            min-width: 90px;
+            min-width: 100px;
             text-align: center;
         }
 
@@ -108,7 +108,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             z-index: 10;
-            width: 180px;
+            width: 220px;
             padding: 10px;
         }
 
@@ -116,25 +116,26 @@
             font-size: 11px;
             color: #8888aa;
             text-transform: uppercase;
-            margin: 5px 0;
+            margin: 8px 0 4px 0;
             border-bottom: 1px solid #2d2d3f;
             padding-bottom: 2px;
         }
 
         .format-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 5px;
         }
 
         .format-opt {
             background-color: #2d2d44;
             color: white;
-            padding: 5px;
+            padding: 5px 2px;
             text-align: center;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 11px;
             cursor: pointer;
+            font-weight: 500;
         }
 
         .format-opt:hover { background-color: #00ffcc; color: #000; font-weight: bold; }
@@ -169,6 +170,7 @@
         .beta .btn-action { background-color: #ff007f; color: white; }
         .beta .btn-action:hover { box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); }
     </style>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 </head>
 <body>
 
@@ -187,11 +189,24 @@
                 <div style="position: relative;">
                     <div class="format-select-btn" id="btn-source" onclick="toggleMenu('source-menu', event)">Z: ---</div>
                     <div id="source-menu" class="dropdown-menu">
-                        <div class="dropdown-category">Formaty</div>
+                        <div class="dropdown-category">Obrazy</div>
                         <div class="format-grid">
                             <div class="format-opt" onclick="setFormat('source', 'PNG')">PNG</div>
                             <div class="format-opt" onclick="setFormat('source', 'JPG')">JPG</div>
                             <div class="format-opt" onclick="setFormat('source', 'WEBP')">WEBP</div>
+                            <div class="format-opt" onclick="setFormat('source', 'BMP')">BMP</div>
+                        </div>
+                        <div class="dropdown-category">Audio</div>
+                        <div class="format-grid">
+                            <div class="format-opt" onclick="setFormat('source', 'MP3')">MP3</div>
+                            <div class="format-opt" onclick="setFormat('source', 'WAV')">WAV</div>
+                            <div class="format-opt" onclick="setFormat('source', 'OGG')">OGG</div>
+                        </div>
+                        <div class="dropdown-category">Wideo</div>
+                        <div class="format-grid">
+                            <div class="format-opt" onclick="setFormat('source', 'MP4')">MP4</div>
+                            <div class="format-opt" onclick="setFormat('source', 'AVI')">AVI</div>
+                            <div class="format-opt" onclick="setFormat('source', 'MKV')">MKV</div>
                         </div>
                     </div>
                 </div>
@@ -201,17 +216,30 @@
                 <div style="position: relative;">
                     <div class="format-select-btn" id="btn-target" onclick="toggleMenu('target-menu', event)">NA: ---</div>
                     <div id="target-menu" class="dropdown-menu" style="right: 0;">
-                        <div class="dropdown-category">Formaty</div>
+                        <div class="dropdown-category">Obrazy</div>
                         <div class="format-grid">
                             <div class="format-opt" onclick="setFormat('target', 'PNG')">PNG</div>
                             <div class="format-opt" onclick="setFormat('target', 'JPG')">JPG</div>
                             <div class="format-opt" onclick="setFormat('target', 'WEBP')">WEBP</div>
+                            <div class="format-opt" onclick="setFormat('target', 'BMP')">BMP</div>
+                        </div>
+                        <div class="dropdown-category">Audio</div>
+                        <div class="format-grid">
+                            <div class="format-opt" onclick="setFormat('target', 'MP3')">MP3</div>
+                            <div class="format-opt" onclick="setFormat('target', 'WAV')">WAV</div>
+                            <div class="format-opt" onclick="setFormat('target', 'OGG')">OGG</div>
+                        </div>
+                        <div class="dropdown-category">Wideo</div>
+                        <div class="format-grid">
+                            <div class="format-opt" onclick="setFormat('target', 'MP4')">MP4</div>
+                            <div class="format-opt" onclick="setFormat('target', 'AVI')">AVI</div>
+                            <div class="format-opt" onclick="setFormat('target', 'MKV')">MKV</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <button class="btn-action" onclick="konwertujLokalny()">Konwertuj Plik</button>
+            <button class="btn-action" id="btn-convert" onclick="konwertujLokalny()">Konwertuj Plik</button>
         </div>
 
         <div class="section beta">
@@ -226,6 +254,8 @@
     <script>
         let wybranySource = "---";
         let wybranyTarget = "---";
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        const ffmpeg = createFFmpeg({ log: false });
 
         function plikZostalWybrany() {
             const fileInput = document.getElementById('file-chooser');
@@ -237,9 +267,8 @@
                 statusText.style.color = "#00ffcc";
 
                 const rozszerzenie = plik.name.split('.').pop().toUpperCase();
-                // Dla JPG/JPEG ujednolicamy do JPG
-                const dopasowaneRozszerzenie = rozszerzenie === "JPEG" ? "JPG" : rozszerzenie;
-                setFormat('source', dopasowaneRozszerzenie);
+                const ujednolicone = rozszerzenie === "JPEG" ? "JPG" : rozszerzenie;
+                setFormat('source', ujednolicone);
             }
         }
 
@@ -264,9 +293,9 @@
             document.getElementById('target-menu').style.display = 'none';
         }
 
-        // PRAWDZIWA KONWERSJA PNG -> JPG / JPG -> PNG w przeglądarce
-        function konwertujLokalny() {
+        async function konwertujLokalny() {
             const fileInput = document.getElementById('file-chooser');
+            const btnConvert = document.getElementById('btn-convert');
             if (fileInput.files.length === 0) {
                 alert("Najpierw wybierz plik z komputera!");
                 return;
@@ -277,46 +306,83 @@
             }
 
             const plik = fileInput.files[0];
-            const reader = new FileReader();
+            const listaObrazow = ["PNG", "JPG", "WEBP", "BMP"];
 
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.getElementById('conversion-canvas');
-                    const ctx = canvas.getContext('2d');
+            // SPRAWDZENIE: Jeśli to grafika, robimy szybką konwersję przez Canvas
+            if (listaObrazow.includes(wybranySource) && listaObrazow.includes(wybranyTarget)) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.getElementById('conversion-canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
 
-                    // Ustawiamy wymiary płótna dokładnie takie jak obrazek
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+                        if (wybranyTarget === "JPG") {
+                            ctx.fillStyle = "#ffffff";
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        }
 
-                    // Jeśli konwertujemy do JPG, dodajemy białe tło (bo PNG może być przezroczyste, a JPG nie obsługuje przezroczystości)
-                    if (wybranyTarget === "JPG") {
-                        ctx.fillStyle = "#ffffff";
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+
+                        let mimeType = "image/png";
+                        if (wybranyTarget === "JPG") mimeType = "image/jpeg";
+                        if (wybranyTarget === "WEBP") mimeType = "image/webp";
+                        if (wybranyTarget === "BMP") mimeType = "image/bmp";
+
+                        const dataUrl = canvas.toDataURL(mimeType, 0.9);
+                        pobierzPlik(dataUrl, plik.name, wybranyTarget);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(plik);
+            } 
+            // SPRAWDZENIE: Jeśli to Audio/Wideo, przetwarzamy za pomocą FFmpeg
+            else {
+                btnConvert.innerText = "Przetwarzanie multimediów... Proszę czekać";
+                btnConvert.disabled = true;
+
+                try {
+                    if (!ffmpeg.isLoaded()) {
+                        await ffmpeg.load();
                     }
 
-                    // Rysujemy stary obrazek na płótnie
-                    ctx.drawImage(img, 0, 0);
+                    const wejsciowaNazwa = "input." + wybranySource.toLowerCase();
+                    const wyjsciowaNazwa = "output." + wybranyTarget.toLowerCase();
 
-                    // Mapowanie formatów dla przeglądarki
-                    let mimeType = "image/png";
-                    if (wybranyTarget === "JPG") mimeType = "image/jpeg";
-                    if (wybranyTarget === "WEBP") mimeType = "image/webp";
+                    // Ładowanie pliku użytkownika do pamięci wirtualnej FFmpeg
+                    ffmpeg.FS('writeFile', wejsciowaNazwa, await fetchFile(plik));
 
-                    // Wyciągamy z płótna nowy, przekonwertowany plik
-                    const dataUrl = canvas.toDataURL(mimeType, 0.9);
-                    
-                    // Automatyczne pobieranie nowego pliku
-                    const nowaNazwa = plik.name.substring(0, plik.name.lastIndexOf('.')) + "." + wybranyTarget.toLowerCase();
-                    const link = document.createElement('a');
-                    link.href = dataUrl;
-                    link.download = nowaNazwa;
-                    link.click();
-                };
-                img.src = event.target.result;
-            };
+                    // Wykonanie komendy konwersji multimedialnej
+                    await ffmpeg.run('-i', wejsciowaNazwa, wyjsciowaNazwa);
 
-            reader.readAsDataURL(plik);
+                    // Odczytanie gotowego pliku z pamięci
+                    const data = ffmpeg.FS('readFile', wyjsciowaNazwa);
+
+                    // Stworzenie adresu URL do pobrania przetworzonego strumienia danych
+                    const dataUrl = URL.createObjectURL(new Blob([data.buffer], { type: 'application/octet-stream' }));
+                    pobierzPlik(dataUrl, plik.name, wybranyTarget);
+
+                    // Czyszczenie pamięci wirtualnej
+                    ffmpeg.FS('unlink', wejsciowaNazwa);
+                    ffmpeg.FS('unlink', wyjsciowaNazwa);
+                } catch (e) {
+                    alert("Wystąpił błąd podczas przetwarzania multimediów.");
+                    console.error(e);
+                }
+
+                btnConvert.innerText = "Konwertuj Plik";
+                btnConvert.disabled = false;
+            }
+        }
+
+        function pobierzPlik(dataUrl, oryginalnaNazwa, rozszerzenie) {
+            const nowaNazwa = oryginalnaNazwa.substring(0, oryginalnaNazwa.lastIndexOf('.')) + "." + rozszerzenie.toLowerCase();
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = nowaNazwa;
+            link.click();
         }
 
         function pobierzZYouTube() {
